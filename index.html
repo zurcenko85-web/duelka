@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Теорема — дуэль по коду</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,600;0,800;1,700&family=Golos+Text:wght@400;600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+[hidden]{display:none!important}
+:root{--paper:#F4EFE4;--card:#FBF8EF;--ink:#211D17;--soft:#7A7261;--line:rgba(33,29,23,.14);--red:#BF3B2B;--blue:#2F4B8F}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Golos Text',sans-serif;color:var(--ink);min-height:100vh;
+ background:linear-gradient(rgba(33,29,23,.045) 1px,transparent 1px) 0 0/100% 28px,
+ linear-gradient(90deg,rgba(33,29,23,.045) 1px,transparent 1px) 0 0/28px 100%,var(--paper)}
+.wrap{max-width:720px;margin:0 auto;padding:34px 20px 80px}
+.mono{font-family:'JetBrains Mono',monospace}.red{color:var(--red)}.blue{color:var(--blue)}
+h1{font-family:Spectral,serif;font-weight:800;font-size:clamp(32px,6vw,54px);line-height:1.05}
+h1 em{font-style:italic;font-weight:700}
+.over{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.26em;
+ color:var(--soft);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.over b{width:10px;height:10px;background:var(--red);flex:none}
+.card{background:var(--card);border:1.5px solid var(--ink);box-shadow:7px 7px 0 rgba(33,29,23,.12);padding:22px;margin-top:20px}
+.ttl{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.22em;
+ margin-bottom:14px;display:flex;align-items:center;gap:10px}.ttl::after{content:'';flex:1;height:1px;background:var(--line)}
+input{background:transparent;border:0;border-bottom:2px solid var(--ink);padding:9px 2px;font-family:inherit;
+ font-size:17px;color:var(--ink);outline:none;width:100%;border-radius:0}
+input:focus{border-color:var(--red)}
+label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;
+ letter-spacing:.2em;color:var(--soft);margin:12px 0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-weight:600;
+ font-size:15px;padding:12px 18px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);
+ cursor:pointer;transition:.12s;user-select:none}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--red)}
+.btn:active{transform:translate(1px,1px);box-shadow:none}
+.btn:disabled{opacity:.35;pointer-events:none}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.red{background:var(--red);border-color:var(--red)}
+.btn.wide{width:100%}.btn.small{padding:8px 13px;font-size:13px}
+.seg{display:flex}.seg button{flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+ padding:9px 4px;background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-left:0;cursor:pointer}
+.seg button:first-child{border-left:1.5px solid var(--ink)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:8px 12px;
+ border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.chip.on{background:var(--ink);color:var(--paper)}
+.note{font-size:12.5px;color:var(--soft);min-height:16px;margin-top:12px;line-height:1.5}
+.codebig{font-family:'JetBrains Mono',monospace;font-size:clamp(34px,8vw,52px);font-weight:800;
+ letter-spacing:.16em;text-align:center;padding:10px 0}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.recent{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.recent button{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:6px 10px;
+ border:1px dashed var(--ink);background:transparent;color:var(--ink);cursor:pointer;letter-spacing:.1em}
+.pd{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--soft);margin-right:5px}
+.pd.on{background:#4a7c3f;border-color:#4a7c3f}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;text-align:center;margin-bottom:14px}
+.sc{font-family:Spectral,serif;font-weight:800;font-size:clamp(44px,9vw,78px);line-height:1}
+.vs{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--soft)}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink)}
+.dot.h{background:var(--red);border-color:var(--red)}.dot.g{background:var(--blue);border-color:var(--blue)}
+.dot.d{background:var(--soft);border-color:var(--soft)}
+.timer{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.tn{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;min-width:60px;text-align:right}
+.tb{flex:1;height:6px;background:rgba(33,29,23,.1)}.tb i{display:block;height:100%;background:var(--ink)}
+.timer.warn .tb i{background:var(--red)}.timer.warn .tn{color:var(--red)}
+.task{background:var(--card);border:1.5px solid var(--ink);box-shadow:8px 8px 0 rgba(33,29,23,.09);padding:24px 28px}
+.meta{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;
+ text-transform:uppercase;letter-spacing:.16em;color:var(--soft);margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.text{font-family:Spectral,serif;font-size:19px;line-height:1.6;font-weight:500}
+.img{margin-top:16px;max-width:420px}.img svg{width:100%;height:auto;display:block}
+.ans-row{display:flex;gap:12px;align-items:flex-end;margin-top:22px;flex-wrap:wrap;transition:.25s}
+.ans-row.off{opacity:.3;pointer-events:none}
+.ans-in{flex:1;min-width:140px;font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-7px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+.tries{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soft);margin-top:10px;min-height:14px}
+.ov{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+ background:rgba(244,239,228,.94);backdrop-filter:blur(3px)}
+.ov .in{text-align:center;padding:24px;max-width:600px}
+.ov .k{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.26em;color:var(--soft);margin-bottom:10px}
+.ov .t{font-family:Spectral,serif;font-style:italic;font-weight:700;font-size:clamp(28px,5vw,48px)}
+.ov .a{font-family:'JetBrains Mono',monospace;font-size:14px;margin-top:12px}
+.ov .s{font-family:Spectral,serif;font-weight:800;font-size:48px;margin-top:14px;display:flex;gap:14px;justify-content:center}
+.ov .s .sep{color:var(--soft)}
+.stats{max-width:360px;margin:22px auto 0;text-align:left}
+.stats div{display:flex;justify-content:space-between;padding:10px 2px;border-top:1px dashed var(--line);font-size:14px}
+.stats div:last-child{border-bottom:1px dashed var(--line)}
+.offer{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--card);
+ border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(33,29,23,.15);padding:16px 22px;text-align:center}
+.offer .b{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;max-width:300px;z-index:99}
+.toast{background:var(--ink);color:var(--paper);padding:12px 16px;border-left:4px solid var(--red);
+ font-size:13.5px;line-height:1.45;animation:ti .3s}
+.toast b{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
+ letter-spacing:.2em;color:rgba(244,239,228,.6);margin-bottom:2px}
+@keyframes ti{from{opacity:0;transform:translateX(30px)}to{opacity:1}}
+header{display:flex;justify-content:flex-end;padding:14px 20px 0}
+</style></head><body>
+<header><button class="btn ghost small" id="btnExit" hidden>Выйти</button></header>
+<div class="wrap">
+
+<section id="scr-join">
+ <div class="over"><b></b>дуэль по коду комнаты</div>
+ <h1>Два <span class="red">чернила</span> —<br>одна <em>задача.</em></h1>
+ <div class="card">
+  <div class="ttl">Бланк участника</div>
+  <label for="inName">Ваше имя</label>
+  <input id="inName" maxlength="16" placeholder="Как вас объявить?" autocomplete="off">
+  <div class="row"><button class="btn wide" id="btnCreate">Создать комнату</button></div>
+  <div class="row">
+    <input id="inCode" class="mono" maxlength="6" placeholder="код · например k7xq2m"
+      style="flex:2;font-weight:700;letter-spacing:.2em;text-transform:lowercase" autocomplete="off" spellcheck="false">
+    <button class="btn ghost" id="btnJoin" style="flex:1">Войти</button>
+  </div>
+  <div class="recent" id="recent"></div>
+  <div class="note">Создайте комнату и передайте другу код из шести символов или ссылку <span class="mono">…/#код</span>.</div>
+ </div>
+</section>
+
+<section id="scr-wait" hidden>
+ <div class="over"><b></b>лобби · комната <span class="mono" id="lobCode"></span></div>
+ <h1>Ждём второго…</h1>
+ <div class="card">
+  <div class="ttl">Код комнаты</div>
+  <div class="codebig" id="codeBig">······</div>
+  <div class="row" style="justify-content:center">
+   <button class="btn ghost small" id="btnCopyCode">Копировать код</button>
+   <button class="btn ghost small" id="btnCopyLink">Копировать ссылку</button>
+  </div>
+  <div class="ttl" style="margin-top:18px">Игроки</div>
+  <div style="display:flex;justify-content:space-around;font-size:14.5px">
+    <span><i class="pd" id="p0"></i><b id="w1">ждём…</b></span>
+    <span><i class="pd" id="p1"></i><b id="w2">ждём…</b></span>
+  </div>
+  <div class="ttl" style="margin-top:18px">Регламент <span class="note" style="margin:0" id="whoSets"></span></div>
+  <label>Очков до победы</label>
+  <div class="seg" id="segT"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button></div>
+  <label>Секунд на задачу</label>
+  <div class="seg" id="segTime"><button data-v="60">60</button><button data-v="90">90</button><button data-v="120">120</button><button data-v="180">180</button><button data-v="240">240</button></div>
+  <label>Темы</label>
+  <div class="chips" id="chips"></div>
+  <div id="bankBox">
+   <div class="ttl" style="margin-top:18px">Банк прототипов <span class="note" style="margin:0" id="bankN"></span></div>
+   <div class="row"><input id="inIds" class="mono" placeholder="номера задач: 26576 27439 …"
+     style="flex:3;font-size:14px" autocomplete="off" spellcheck="false">
+   <button class="btn small" id="btnFetch" style="flex:1">Загрузить</button></div>
+   <div class="note" id="bankMsg">Номера — с math-ege.sdamgia.ru (зеркало банка ФИПИ): в адресе задачи problem?id=26576 число и есть номер. До 6 за раз. Загрузка идёт через публичный CORS-прокси — иногда сбой, повторите.</div>
+  </div>
+  <div style="margin-top:16px"><button class="btn red wide" id="btnStart" disabled>Начать дуэль</button></div>
+  <div class="note" id="waitNote"></div>
+ </div>
+</section>
+
+<section id="scr-arena" hidden>
+ <div class="score">
+  <div><div class="vs" id="nmL">вы</div><div class="sc red" id="sL">0</div></div>
+  <div><div class="vs">раунд <span id="rN">—</span></div><div class="dots" id="dots"></div></div>
+  <div><div class="vs" id="nmR">соперник</div><div class="sc blue" id="sR">0</div></div>
+ </div>
+ <div class="timer" id="tw"><div class="tn" id="tN">—:—</div><div class="tb"><i id="tB" style="width:100%"></i></div></div>
+ <div class="task">
+  <div class="meta"><span id="lbl">Задание —</span><span id="tpc"></span></div>
+  <div class="text" id="txt">—</div>
+  <div class="img" id="img"></div>
+  <div class="ans-row" id="ar">
+    <input id="inA" class="ans-in" placeholder="ответ · можно 7/3" autocomplete="off" spellcheck="false">
+    <button class="btn" id="btnA">Ответить</button>
+  </div>
+  <div class="tries"><span id="myTries"></span> <span class="blue" id="opTries"></span></div>
+  <div style="margin-top:8px"><button class="btn ghost small" id="btnSkip" hidden>Пропустить задание</button></div>
+ </div>
+</section>
+
+<section id="scr-final" hidden>
+ <div class="over" style="justify-content:center"><b></b>матч завершён</div>
+ <h1 id="fT">—</h1>
+ <div style="display:flex;justify-content:center;gap:18px;font-family:Spectral,serif;font-weight:800;font-size:64px;margin-top:18px">
+   <span class="red" id="f1">0</span><span style="color:var(--soft)">:</span><span class="blue" id="f2">0</span>
+ </div>
+ <div class="stats" id="fStats"></div>
+ <div class="row" style="justify-content:center;margin-top:24px">
+   <button class="btn red" id="btnRe" hidden>Реванш</button>
+   <button class="btn ghost" id="btnNew">Новая комната</button>
+ </div>
+</section>
+
+</div>
+
+<div class="ov" id="ov" hidden style="display:none">
+ <div class="in">
+  <div class="k" id="ovK">раунд</div>
+  <div class="t" id="ovT">—</div>
+  <div class="a" id="ovA"></div>
+  <div class="s"><span class="red" id="ov1">0</span><span class="sep">:</span><span class="blue" id="ov2">0</span></div>
+ </div>
+</div>
+
+<div class="offer" id="offer" hidden style="display:none">
+ <div id="offerTx">Соперник предлагает пропустить это задание</div>
+ <div class="b"><button class="btn red small" id="oYes">Принять</button>
+ <button class="btn ghost small" id="oNo">Отклонить</button></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ══ НАСТРОЙКА: вставьте свои ключи Upstash (бесплатно, console.upstash.com) ══ */
+const UP_URL='https://solid-mayfly-285363.upstash.io';   // вида https://xxx.upstash.io
+const UP_TOK='********';
+
+/* ══ утилиты ══ */
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const CODE_AB='abcdefghjkmnpqrstuvwxyz23456789';
+const genCode=()=>Array.from({length:6},()=>CODE_AB[Math.random()*CODE_AB.length|0]).join('');
+const newTok=()=>crypto.getRandomValues(new Uint8Array(12)).reduce((s,b)=>s+b.toString(16).padStart(2,'0'),'');
+const MINUS='−';
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+ return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function fmtAnswer(v,p){let s=p>0?(+v).toFixed(p).replace(/0+$/,'').replace(/[.,]$/,''):String(Math.round(v));
+ return s.replace('-','−').replace('.',',')}
+function parseAnswer(raw){
+ const s=String(raw==null?'':raw).trim().replace(',','.').replace(/[−–—]/g,'-').replace(/\s+/g,'');
+ const f=/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/.exec(s);
+ if(f){const d=parseFloat(f[2]);return d?parseFloat(f[1])/d:null}
+ return /^-?\d+(\.\d+)?$/.test(s)?parseFloat(s):null}
+const cleanName=s=>{s=String(s||'').replace(/\s+/g,' ').trim().slice(0,16);
+ return s||pick(['Пифагор','Эйлер','Ковалевская','Гаусс','Гипатия','Коши'])};
+function toast(t,m){const d=document.createElement('div');d.className='toast';
+ d.innerHTML='<b>'+t+'</b>'+m;$('toasts').appendChild(d);setTimeout(()=>d.remove(),4500)}
+
+/* ══ база: Upstash REST из браузера ══ */
+async function rcmd(args){
+ const r=await fetch(UP_URL,{method:'POST',headers:{Authorization:'Bearer '+UP_TOK,
+  'Content-Type':'application/json'},body:JSON.stringify(args)});
+ if(!r.ok)throw new Error('Upstash HTTP '+r.status);
+ const j=await r.json();
+ if(j.error)throw new Error(j.error);
+ return j.result;
+}
+const KEY=c=>'teo:r:'+c, LOCK=c=>'teo:lock:'+c, WIN=(c,n)=>'teo:win:'+c+':'+n, TTL=7200;
+const getRoom=async c=>{const s=await rcmd(['GET',KEY(c)]);return s?JSON.parse(s):null};
+const saveRoom=(c,r)=>rcmd(['SET',KEY(c),JSON.stringify(r),'EX',TTL]);
+async function mutate(code,fn){
+ for(let i=0;i<8;i++){
+  const tok=newTok();
+  if(await rcmd(['SET',LOCK(code),tok,'EX',5,'NX'])){
+   try{
+    const room=await getRoom(code);
+    const out=await fn(room);
+    if(room&&out&&out.changed)await saveRoom(code,room);
+    return out||{};
+   }finally{
+    const cur=await rcmd(['GET',LOCK(code)]);
+    if(cur===tok)await rcmd(['DEL',LOCK(code)]);
+   }
+  }
+  await sleep(80+Math.random()*120);
+ }
+ return{error:'база занята, повторите'};
+}
+
+/* ══ генераторы задач ══ */
+const TOPICS=[['eq','Уравнения'],['pow','Преобразования'],['der','Производная'],['pro','Вероятность'],
+ ['pla','Планиметрия'],['ste','Стереометрия'],['txt','Текстовые']];
+const TLBL=Object.fromEntries(TOPICS);
+const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻','−':'⁻','x':'ˣ'};
+const SUB={'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+const sup=s=>String(s).split('').map(c=>SUP[c]||'').join('');
+const sub=s=>String(s).split('').map(c=>SUB[c]||'').join('');
+const plural=(n,one,few,many)=>{const a=n%10,b=n%100;return (a===1&&b!==11)?one:(a>=2&&a<=4&&(b<10||b>=20))?few:many};
+function lin(a,b){let s=(a===1?'':a)+'x';if(b)s+=b<0?` ${MINUS} ${Math.abs(b)}`:` + ${b}`;return s}
+function poly3(A,B){let s='x³';if(A)s+=A<0?` ${MINUS} ${Math.abs(A)}x²`:` + ${A}x²`;if(B)s+=B<0?` ${MINUS} ${Math.abs(B)}x`:` + ${B}x`;return s+' + 7'}
+function g_linear(){const x=rnd(-9,9),a=rnd(2,9),b=rnd(-20,20),c=a*x+b;
+ return{text:`Найдите корень уравнения ${lin(a,b)} = ${c<0?MINUS+Math.abs(c):c}.`,ans:x,prec:0}}
+function g_quadratic(){let p=rnd(-9,9),q=rnd(-9,9);while(q===p)q=rnd(-9,9);
+ const B=-(p+q),C=p*q;let s='x²';
+ if(B)s+=B<0?` ${MINUS} ${Math.abs(B)}x`:` + ${B}x`;if(C)s+=C<0?` ${MINUS} ${Math.abs(C)}`:` + ${C}`;
+ return{text:`Решите уравнение ${s} = 0. Если корней несколько, в ответе укажите больший.`,ans:Math.max(p,q),prec:0}}
+function g_exponential(){const a=pick([2,3,4,5]);
+ if(Math.random()<.6){const k=rnd(2,5),n=rnd(1,9);
+  return{text:`Найдите корень уравнения ${a}${sup('x-'+n)} = ${a**k}.`,ans:k+n,prec:0}}
+ const k=rnd(2,5),n=rnd(k+1,k+9);
+ return{text:`Найдите корень уравнения (1/${a})${sup('x-'+n)} = ${a**k}.`,ans:n-k,prec:0}}
+function g_logarithm(){const a=pick([2,3,5]),k=rnd(2,4);
+ if(Math.random()<.5){const n=rnd(1,Math.min(30,a**k-1));
+  return{text:`Найдите корень уравнения log${sub(a)}(x + ${n}) = ${k}.`,ans:a**k-n,prec:0}}
+ const n=rnd(1,20);
+ return{text:`Найдите корень уравнения log${sub(a)}(x ${MINUS} ${n}) = ${k}.`,ans:a**k+n,prec:0}}
+function g_trig(){
+ for(let t=0;t<200;t++){
+  const f=Math.random()<.5?'sin':'cos',k=pick([2,3,4,6]);
+  const bank=f==='sin'
+   ?[['1/2',[30,150]],['√2/2',[45,135]],['√3/2',[60,120]],[MINUS+'1/2',[210,330]],['1',[90]],[MINUS+'1',[270]]]
+   :[['1/2',[60,300]],['√2/2',[45,315]],['√3/2',[30,330]],[MINUS+'1/2',[120,240]],['1',[0]],[MINUS+'1',[180]]];
+  const[sv,ts]=pick(bank);
+  if((k*ts[0])%180!==0)continue;
+  const cands=[];for(let n=-6;n<=6;n++)for(const tt of ts)cands.push(k*tt/180+2*k*n);
+  const pos=cands.filter(x=>x>0),neg=cands.filter(x=>x<0);
+  if(!pos.length||!neg.length)continue;
+  const mp=Math.random()<.5;
+  return{text:`Решите уравнение ${f}(πx/${k}) = ${sv}. В ответе укажите ${mp?'наименьший положительный':'наибольший отрицательный'} корень.`,
+   ans:mp?Math.min(...pos):Math.max(...neg),prec:0};
+ }
+ return{text:'Решите уравнение sin(πx/3) = √3/2. В ответе укажите наименьший положительный корень.',ans:1,prec:0}}
+function g_powers(){const A=pick([2,3,5,10]),m=rnd(2,7),n=rnd(1,6),k=rnd(1,6),e=m+n-k;
+ if(e>=1&&e<=5)return{text:`Найдите значение выражения a${sup(m)} · a${sup(n)} / a${sup(k)}, если a = ${A}.`,ans:A**e,prec:0};
+ const m2=rnd(2,3),n2=rnd(2,3),k2=rnd(1,m2*n2-1);
+ return{text:`Найдите значение выражения (a${sup(m2)})${sup(n2)} / a${sup(k2)}, если a = ${A}.`,ans:A**(m2*n2-k2),prec:0}}
+function g_quadmin(){const a=rnd(-9,9)||5,c=rnd(-15,15),b=-2*a;let s='x²';
+ if(b)s+=b<0?` ${MINUS} ${Math.abs(b)}x`:` + ${b}x`;if(c)s+=c<0?` ${MINUS} ${Math.abs(c)}`:` + ${c}`;
+ return{text:`Найдите точку минимума функции y = ${s}.`,ans:a,prec:0}}
+function g_cubicmin(){const u=rnd(-5,2),v=u+rnd(1,4),A=-(v+2*u),B=u*u+2*u*v;
+ return{text:`Найдите точку минимума функции y = ${poly3(A,B)}.`,ans:v,prec:0}}
+function g_derivgraph(){
+ const ys=[];let y=rnd(-3,3);
+ for(let i=0;i<13;i++){if(y===0)y=Math.random()<.5?1:-1;ys.push(y);y=Math.max(-4,Math.min(4,y+rnd(-2,2)))}
+ const pos=ys.filter(v=>v>0).length,neg=ys.filter(v=>v<0).length;
+ let zeros=0;for(let i=0;i<12;i++)if(ys[i]*ys[i+1]<0)zeros++;
+ const opts=[
+  [`укажите количество целых точек отрезка [${MINUS}6; 6], в которых производная функции f(x) положительна.`,pos],
+  [`укажите количество целых точек отрезка [${MINUS}6; 6], в которых производная функции f(x) отрицательна.`,neg]];
+ if(zeros)opts.push(['укажите количество точек, в которых производная функции f(x) равна нулю.',zeros]);
+ const[q,answ]=pick(opts);
+ const X=x=>40+(x+6)*40,Y=v=>160-28*v;let g='';
+ for(let x=-6;x<=6;x++)g+=`<line x1="${X(x)}" y1="26" x2="${X(x)}" y2="294" stroke="rgba(33,29,23,.09)"/>`;
+ for(let v=-4;v<=4;v++)g+=`<line x1="40" y1="${Y(v)}" x2="520" y2="${Y(v)}" stroke="rgba(33,29,23,.09)"/>`;
+ g+='<line x1="34" y1="160" x2="528" y2="160" stroke="#211D17" stroke-width="1.6"/>';
+ g+=`<line x1="${X(0)}" y1="26" x2="${X(0)}" y2="294" stroke="#211D17" stroke-width="1.6"/>`;
+ for(let x=-6;x<=6;x++){
+  g+=`<line x1="${X(x)}" y1="156" x2="${X(x)}" y2="164" stroke="#211D17" stroke-width="1.4"/>`;
+  g+=`<text x="${X(x)}" y="182" font-size="10.5" text-anchor="middle" fill="rgba(33,29,23,.5)">${x===0?'':x}</text>`}
+ const pts=ys.map((v,i)=>`${X(i-6)},${Y(v)}`).join(' ');
+ const svg=`<svg viewBox="0 0 560 320" xmlns="http://www.w3.org/2000/svg">${g}<polyline points="${pts}" fill="none" stroke="#211D17" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+ return{text:`На рисунке изображён график y = f′(x) — производной функции f(x), определённой на интервале (${MINUS}7; 7). ${q[0].toUpperCase()+q.slice(1)}`,
+  ans:answ,prec:0,img:svg}}
+function g_pies(){const N=pick([4,5,8,10,16,20,25]),M=rnd(1,N-1);
+ return{text:`На тарелке лежат ${N} ${plural(N,'пирожка','пирожков','пирожков')}: ${M} ${plural(M,'пирожок','пирожка','пирожков')} с капустой, остальные — с яблоками. Найдите вероятность того, что случайно выбранный пирожок окажется с яблоками. Ответ округлите до сотых.`,ans:(N-M)/N,prec:2}}
+function g_dice(){const s=rnd(2,12),c=[0,0,1,2,3,4,5,6,5,4,3,2,1][s];
+ return{text:`Игральный кубик бросают дважды. Найдите вероятность того, что сумма выпавших очков равна ${s}. Ответ округлите до сотых.`,ans:c/36,prec:2}}
+function g_tickets(){const N=pick([10,20,25,40,50]),M=rnd(1,N-1);
+ return{text:`На экзамене по механике ${N} ${plural(N,'билет','билета','билетов')}, из которых ${M} студент не выучил. Найдите вероятность того, что ему попадётся выученный билет. Ответ округлите до сотых.`,ans:(N-M)/N,prec:2}}
+function g_trisides(){const a=rnd(6,20),b=rnd(6,20),s=pick([0.4,0.5,0.6]);
+ return{text:`Две стороны треугольника равны ${a} и ${b}, а синус угла между ними равен ${String(s).replace('.',',')}. Найдите площадь этого треугольника.`,ans:a*b*s/2,prec:2}}
+function g_righttri(){const a=rnd(3,16),b=rnd(3,16);
+ return{text:`В прямоугольном треугольнике катеты равны ${a} и ${b}. Найдите площадь этого треугольника.`,ans:a*b/2,prec:1}}
+function g_rhombus(){const m=rnd(2,7);
+ return{text:`Сторона ромба равна ${2*m}, а один из углов этого ромба равен 30°. Найдите площадь ромба.`,ans:2*m*m,prec:0}}
+function g_box(){const a=rnd(2,9),b=rnd(2,9),c=rnd(2,9);
+ return{text:`Два ребра прямоугольного параллелепипеда, выходящие из одной вершины, равны ${a} и ${b}. Объём параллелепипеда равен ${a*b*c}. Найдите третье ребро, выходящее из той же вершины.`,ans:c,prec:0}}
+function g_pyramid(){const h=rnd(2,12),S=3*rnd(2,15);
+ return{text:`Площадь основания пирамиды равна ${S}, а высота пирамиды равна ${h}. Найдите её объём.`,ans:S*h/3,prec:0}}
+function g_percent(){
+ for(let t=0;t<300;t++){const base=pick([800,1000,1200,1600,2000,2400,3000,4000]),p=rnd(5,50),q=rnd(5,50);
+  const f=base*(1+p/100)*(1-q/100);
+  if(Math.abs(f-Math.round(f))<1e-9)
+   return{text:`Куртка стоила ${base} рублей. На распродаже её цену сначала повысили на ${p}%, а затем снизили на ${q}%. Сколько рублей стала стоить куртка после снижения цены?`,ans:Math.round(f),prec:0}}
+ return{text:'Куртка стоила 1000 рублей. На распродаже её цену сначала повысили на 10%, а затем снизили на 10%. Сколько рублей стала стоить куртка после снижения цены?',ans:990,prec:0}}
+function g_speed(){
+ for(let t=0;t<300;t++){const t1=rnd(1,4),t2=rnd(1,4),v1=rnd(3,12)*10,v2=rnd(3,12)*10;
+  const s=(t1*v1+t2*v2)/(t1+t2);
+  if(Math.abs(s-Math.round(s))<1e-9)
+   return{text:`Первые ${t1} ${plural(t1,'час','часа','часов')} велосипедист ехал со скоростью ${v1} км/ч, следующие ${t2} ${plural(t2,'час','часа','часов')} — со скоростью ${v2} км/ч. Найдите среднюю скорость велосипедиста на всём пути. Ответ дайте в км/ч.`,ans:Math.round(s),prec:0}}
+ return{text:'Первый час велосипедист ехал со скоростью 50 км/ч, следующий час — со скоростью 70 км/ч. Найдите его среднюю скорость. Ответ дайте в км/ч.',ans:60,prec:0}}
+const GENS=[['eq',g_linear],['eq',g_quadratic],['eq',g_exponential],['eq',g_logarithm],['eq',g_trig],
+ ['pow',g_powers],['der',g_quadmin],['der',g_cubicmin],['der',g_derivgraph],
+ ['pro',g_pies],['pro',g_dice],['pro',g_tickets],
+ ['pla',g_trisides],['pla',g_righttri],['pla',g_rhombus],
+ ['ste',g_box],['ste',g_pyramid],['txt',g_percent],['txt',g_speed]];
+
+/* ══ парсер (через публичный CORS-прокси; может сбоить — повторите) ══ */
+function unesc(s){const E={'amp':'&','lt':'<','gt':'>','quot':'"','#39':"'",'nbsp':' ','mdash':'—','ndash':'–','minus':'−','deg':'°','pi':'π','radic':'√','times':'×'};
+ return s.replace(/&(amp|lt|gt|quot|#39|nbsp|mdash|ndash|minus|deg|pi|radic|times);/g,(m,e)=>E[e]).replace(/&#(\d+);/g,(m,d)=>String.fromCodePoint(+d))}
+function stripTags(h){return unesc(h.replace(/<(script|style)[\s\S]*?<\/\1>/gi,' ')
+ .replace(/<img[^>]*>/gi,' ⟨рисунок⟩ ').replace(/<[^>]+>/g,' ')).replace(/[ \t]+/g,' ')}
+async function fetchProblem(pid){
+ const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent('https://math-ege.sdamgia.ru/problem?id='+pid));
+ if(!r.ok)throw new Error('HTTP '+r.status);
+ const txt=stripTags(await r.text());
+ const mh=/Задание\s*(\d+)\s*№\s*(\d+)/.exec(txt);
+ if(!mh)throw new Error('задача не найдена');
+ const body=txt.slice(mh.index+mh[0].length);
+ const ma=/Ответ\s*[:\-—]?\s*([^\n\r]+)/.exec(body);
+ if(!ma)throw new Error('ответ не найден');
+ const text=body.slice(0,ma.index).replace(/\s+/g,' ').trim().replace(/^[.·\s]+/,'');
+ const raw=ma[1].split(/\s+Решение/)[0].trim().replace(/[.\s]+$/,'');
+ const norm=raw.replace('−','-').replace(',','.');
+ let ans=null,prec=0;
+ if(/^-?\d+(\.\d+)?$/.test(norm)){ans=parseFloat(norm);prec=norm.includes('.')?norm.split('.')[1].length:0}
+ if(!text)throw new Error('пустой текст');
+ return{text,ans,raw,prec,task:mh[1]};
+}
+
+/* ══ состояние ══ */
+const freshRoom=(code,name)=>({v:1,tokens:[newTok(),null],names:[name,null],seen:[Date.now(),0],
+ settings:{target:5,time:120,topics:Object.fromEntries(TOPICS.map(([k])=>[k,true]))},
+ phase:'lobby',scores:[0,0],hist:[],tries:[0,0],n:0,round:null,between:null,
+ pendingSkip:null,skipEv:null,winner:null,note:null,deck:[],used:{},
+ stats:[{solved:0,sum:0,best:null,wrong:0},{solved:0,sum:0,best:null,wrong:0}]});
+function finishRound(room,kind,ms,answer,now){
+ if(kind===0||kind===1){room.scores[kind]++;
+  const st=room.stats[kind];st.solved++;st.sum+=ms;st.best=st.best==null?ms:Math.min(st.best,ms)}
+ room.hist.push(kind);
+ const done=room.scores[0]>=room.settings.target||room.scores[1]>=room.settings.target;
+ room.between={until:now+5200,last:{n:room.round.n,kind,answer,ms},finalAfter:done};
+ room.round=null;room.pendingSkip=null;room.v++;
+}
+function resetMatch(room,now){
+ Object.assign(room,{scores:[0,0],hist:[],tries:[0,0],n:0,round:null,deck:[],used:{},
+  winner:null,pendingSkip:null,skipEv:null,note:null,
+  stats:[{solved:0,sum:0,best:null,wrong:0},{solved:0,sum:0,best:null,wrong:0}]});
+ room.phase='between';room.between={until:now+1500,last:null,finalAfter:false};room.v++;
+}
+async function pickTask(room){
+ const bank=(await rcmd(['LRANGE','teo:bank','0','-1'])).map(s=>{try{return JSON.parse(s)}catch(e){return null}}).filter(Boolean);
+ if(bank.length&&Math.random()<0.4){
+  const start=Math.floor(Math.random()*bank.length);
+  for(let i=0;i<Math.min(bank.length,12);i++){
+   const bp=bank[(start+i)%bank.length],sig='b|'+bp.text.slice(0,80);
+   if(!room.used[sig]){room.used[sig]=1;
+    return{text:bp.text,ans:bp.ans,rawans:bp.raw||null,prec:bp.prec||0,
+     topic:'Задание '+(bp.task!=null?bp.task:'?')+' · банк ФИПИ',img:''}}
+  }
+ }
+ const pool=GENS.filter(([c])=>room.settings.topics[c]);
+ if(!pool.length)return null;
+ if(!room.deck.length){room.deck=pool.slice();
+  for(let i=room.deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[room.deck[i],room.deck[j]]=[room.deck[j],room.deck[i]]}}
+ const[cat,fn]=room.deck.pop();
+ let t=fn(),sig=t.text+'|'+t.ans,guard=0;
+ while(room.used[sig]&&guard<60){t=fn();sig=t.text+'|'+t.ans;guard++}
+ room.used[sig]=1;
+ return{text:t.text,ans:t.ans,rawans:null,prec:t.prec,topic:(TLBL[cat]||'')+' · прототип банка',img:t.img||''};
+}
+/* хост готовит раунд: в базу кладётся только ХЕШ ответа */
+async function hostStartRound(code,room){
+ const task=await pickTask(room);
+ if(!task){room.phase='lobby';room.between=null;room.note='Нет задач: пополните банк или включите темы.';room.v++;return}
+ room.n++;
+ const canonical=String(task.ans).toFixed(task.prec);
+ const salt=newTok().slice(0,8);
+ const round={n:room.n,text:task.text,topic:task.topic,img:task.img||'',prec:task.prec,
+  h:await sha(canonical+':'+salt),salt,started:Date.now(),deadline:Date.now()+room.settings.time*1000};
+ room.round=round;room.tries=[0,0];room.pendingSkip=null;room.skipEv=null;room.note=null;room.v++;
+ memAns[room.n]=task.rawans||fmtAnswer(task.ans,task.prec);
+}
+
+/* ══ сессия и опрос ══ */
+let SESS=null,VIEW=null,off=0,tint=null,pollTO=null,lastRN=0,lastEvKey='',lastNoteKey='',lastSeenW=0;
+const memAns={}; // локальный запас «красивых» ответов (хост/решивший)
+const store=()=>{try{return JSON.parse(localStorage.teo_sessions||'{}')}catch(e){return{}}};
+function saveSess(c,s){const m=store();m[c]=s;localStorage.teo_sessions=JSON.stringify(m);
+ let r=[];try{r=JSON.parse(localStorage.teo_recent||'[]')}catch(e){}
+ r=r.filter(x=>x!==c);r.unshift(c);localStorage.teo_recent=JSON.stringify(r.slice(0,6))}
+function dropSess(c){const m=store();delete m[c];localStorage.teo_sessions=JSON.stringify(m)}
+function renderRecent(){const b=$('recent');b.innerHTML='';const m=store();
+ Object.keys(m).slice(0,5).forEach(c=>{const x=document.createElement('button');x.textContent=c;
+  x.onclick=()=>resume(c);b.appendChild(x)})}
+function show(id){['scr-join','scr-wait','scr-arena','scr-final'].forEach(s=>{
+ $(s).hidden=(s!==id);$(s).style.display=(s===id)?'':'none'})}
+function showOv(){const o=$('ov');o.hidden=false;o.style.display='flex'}
+function hideOv(){const o=$('ov');o.hidden=true;o.style.display='none'}
+function hideOffer(){const o=$('offer');o.hidden=true;o.style.display='none'}
+function fatal(msg){clearTimeout(pollTO);clearInterval(tint);
+ if(SESS)dropSess(SESS.code);SESS=null;VIEW=null;hideOv();hideOffer();
+ if(location.hash)history.replaceState(null,'','/');
+ $('btnExit').hidden=true;renderRecent();show('scr-join');toast('Отсоединено',msg)}
+function delay(){if(document.hidden)return 5000;if(!VIEW)return 1500;
+ return VIEW.phase==='round'?900:VIEW.phase==='between'?700:2500}
+async function poll(){
+ if(!SESS)return;
+ const now=Date.now();
+ /* присутствие обновляем не чаще раза в 9 секунд (экономия команд базы) */
+ if(now-lastSeenW>9000){lastSeenW=now;
+  await mutate(SESS.code,r=>{if(r){r.seen[SESS.seat]=now;return{changed:true}}}).catch(()=>{})}
+ const room=await getRoom(SESS.code);
+ if(!room){fatal('Комната удалена (2 ч бездействия).');return}
+ off=now-Date.now(); /* placeholder, пересчитаем ниже */
+ VIEW=room;
+ await serverTick();
+}
+async function serverTick(){
+ const now=Date.now()+0; off=now-Date.now(); /* серверного времени нет — часы общие */
+ const v=VIEW;let need=false;
+ /* время вышло → любой клиент может зафиксировать ничью */
+ if(v.phase==='round'&&v.round&&Date.now()>=v.round.deadline){
+  await mutate(SESS.code,room=>{
+   if(room.phase==='round'&&room.round&&Date.now()>=room.round.deadline){
+    const a=SESS.seat===0?(memAns[room.round.n]||'—'):'—';
+    finishRound(room,'draw',null,a,Date.now());return{changed:true}}
+  }).catch(()=>{});
+  return;
+ }
+ /* истёк запрос пропуска */
+ if(v.pendingSkip&&Date.now()>=v.pendingSkip.until){
+  await mutate(SESS.code,room=>{
+   if(room.pendingSkip&&Date.now()>=room.pendingSkip.until){
+    room.skipEv={res:'timeout',to:room.pendingSkip.by,n:room.pendingSkip.n};
+    room.pendingSkip=null;room.v++;return{changed:true}}
+  }).catch(()=>{});
+  return;
+ }
+ /* пауза кончилась: раунд готовит только хост, финал — любой */
+ if(v.phase==='between'&&v.between&&Date.now()>=v.between.until){
+  if(v.between.finalAfter){
+   await mutate(SESS.code,room=>{
+    if(room.phase==='between'&&room.between&&room.between.finalAfter&&Date.now()>=room.between.until){
+     room.phase='final';room.winner=room.scores[0]>=room.settings.target?0:1;
+     room.between=null;room.v++;return{changed:true}}
+   }).catch(()=>{});
+  }else if(SESS.seat===0){
+   await mutate(SESS.code,async room=>{
+    if(room.phase==='between'&&room.between&&!room.between.finalAfter&&Date.now()>=room.between.until){
+     await hostStartRound(SESS.code,room);return{changed:true}}
+   }).catch(()=>{});
+  }
+ }
+ /* хост добавляет красивый ответ, если финализировал гость */
+ if(SESS.seat===0&&v.phase==='between'&&v.between&&v.between.last&&v.between.last.answer==='—'&&memAns[v.between.last.n]){
+  await mutate(SESS.code,room=>{
+   if(room.between&&room.between.last&&room.between.last.answer==='—'&&memAns[room.between.last.n]){
+    room.between.last.answer=memAns[room.between.last.n];return{changed:true}}
+  }).catch(()=>{});
+ }
+}
+function loop(){clearTimeout(pollTO);poll().then(apply).catch(()=>{}).finally(()=>{pollTO=setTimeout(loop,delay())})}
+
+/* ══ отрисовка ══ */
+function apply(){
+ const v=VIEW;if(!v)return;
+ $('btnExit').hidden=false;
+ if(v.note){const k=v.v+':note';if(k!==lastNoteKey){lastNoteKey=k;toast('Сервер',v.note)}}
+ if(v.skipEv){const k=v.v+':sk';if(k!==lastEvKey){lastEvKey=k;
+  if(v.skipEv.to===v.you?false:true){}
+  if(v.skipEv.to===SESS.seat)toast('Пропуск',v.skipEv.res==='no'?'Соперник отклонил — продолжаем.':'Нет ответа за 15 секунд.');
+  else if(v.skipEv.res==='ok')toast('Пропуск','Соперник согласился — задание пропущено.')}}
+ $('nmL').textContent='вы · '+(v.names[SESS.seat]||'вы');
+ $('nmR').textContent='соперник · '+(v.names[1-SESS.seat]||'ждём…');
+ if(v.phase==='lobby'){show('scr-wait');renderLobby();return}
+ if(v.phase==='final'){show('scr-final');renderFinal();return}
+ show('scr-arena');
+ $('sL').textContent=v.scores[SESS.seat];$('sR').textContent=v.scores[1-SESS.seat];
+ const b=$('dots');b.innerHTML='';v.hist.forEach(h=>{const d=document.createElement('span');
+  d.className='dot '+(h===SESS.seat?'h':h===1-SESS.seat?'g':'d');b.appendChild(d)});
+ $('myTries').textContent=v.tries[SESS.seat]?'неверных попыток: '+v.tries[SESS.seat]:'';
+ $('opTries').textContent=v.tries[1-SESS.seat]?'ошибок соперника: '+v.tries[1-SESS.seat]:'';
+ if(v.phase==='round'&&v.round){
+  if(v.round.n!==lastRN){lastRN=v.round.n;mountRound(v.round)}
+  tickTimer();
+ }
+ if(v.phase==='between'){
+  clearInterval(tint);$('tN').textContent='0:00';$('tB').style.width='0%';
+  $('ar').classList.add('off');$('inA').disabled=true;$('btnSkip').hidden=true;hideOffer();
+  if(v.between&&v.between.last)showRoundEnd(v.between.last);
+  else{hideOv();$('lbl').textContent='Задание —';$('tpc').textContent='';
+   $('txt').textContent='Приготовились…';$('img').innerHTML=''}
+ }
+ skipUI();
+}
+function mountRound(r){
+ hideOv();hideOffer();
+ $('rN').textContent=r.n;$('lbl').textContent='Задание '+r.n;$('tpc').textContent=r.topic||'';
+ $('txt').textContent=r.text;$('img').innerHTML=r.img||'';
+ $('ar').classList.remove('off');const i=$('inA');i.value='';i.disabled=false;
+ const sk=$('btnSkip');sk.hidden=false;sk.disabled=false;sk.textContent='Пропустить задание';
+ clearInterval(tint);tickTimer();
+ tint=setInterval(tickTimer,200);
+ setTimeout(()=>i.focus(),80);
+}
+function tickTimer(){const r=VIEW&&VIEW.round;if(!r)return;
+ const left=Math.max(0,r.deadline-Date.now());
+ $('tB').style.width=(left/(VIEW.time*1000)*100)+'%';
+ const s=Math.ceil(left/1000);$('tN').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+ $('tw').classList.toggle('warn',left<=10000&&left>0)}
+function showRoundEnd(l){
+ $('ovK').textContent='раунд '+l.n;
+ $('ovT').innerHTML=l.kind==='skip'?'Задание <em>пропущено</em>'
+  :l.kind==='draw'?'Время вышло — <em>ничья</em>'
+  :l.kind===SESS.seat?'Очко — <em>за тобой</em>':'Очко уходит <em>сопернику</em>';
+ $('ovA').innerHTML='верный ответ: <b>'+(l.answer||'—')+'</b>'+
+  (l.ms!=null?(' · время: '+(l.ms/1000).toFixed(1).replace('.',',')+' с'):'');
+ $('ov1').textContent=VIEW.scores[SESS.seat];$('ov2').textContent=VIEW.scores[1-SESS.seat];
+ showOv();
+}
+function skipUI(){
+ const v=VIEW;if(v.phase!=='round'||!v.round){$('btnSkip').hidden=true;hideOffer();return}
+ const p=v.pendingSkip,sk=$('btnSkip');
+ if(!p){sk.hidden=false;sk.disabled=false;sk.textContent='Пропустить задание';hideOffer();return}
+ if(p.by===SESS.seat){sk.hidden=false;sk.disabled=true;sk.textContent='ожидаем согласие…';hideOffer()}
+ else{sk.hidden=true;$('offer').hidden=false;$('offer').style.display='block'}
+}
+function renderLobby(){
+ const v=VIEW,ed=SESS.seat===0;
+ $('lobCode').textContent=SESS.code;$('codeBig').textContent=SESS.code;
+ const on=(id,val)=>$(id).querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===val));
+ on('segT',v.settings.target);on('segTime',v.settings.time);
+ ['segT','segTime'].forEach(id=>$(id).style.pointerEvents=ed?'auto':'none');
+ const ch=$('chips');ch.innerHTML='';
+ TOPICS.forEach(([k,l])=>{const x=document.createElement('button');
+  x.className='chip'+(v.settings.topics[k]?' on':'');x.textContent=l;
+  if(ed)x.onclick=()=>{v.settings.topics[k]=!v.settings.topics[k];
+   mutate(SESS.code,r=>{if(r&&r.phase==='lobby'&&SESS.seat===0){r.settings.topics[k]=v.settings.topics[k];r.v++;return{changed:true}}})};
+  ch.appendChild(x)});
+ $('whoSets').textContent=ed?'· задаёте вы':'· задаёт '+(v.names[0]||'создатель');
+ $('w1').textContent=v.names[0]||'ждём…';$('w2').textContent=v.names[1]||'ждём…';
+ $('p0').className='pd'+(Date.now()-(v.seen[0]||0)<45000?' on':'');
+ $('p1').className='pd'+(Date.now()-(v.seen[1]||0)<45000?' on':'');
+ $('bankBox').style.display=ed?'':'none';
+ if(ed)rcmd(['LLEN','teo:bank']).then(n=>$('bankN').textContent='· задач: '+n).catch(()=>{});
+ $('btnStart').disabled=!(ed&&v.names[1]);
+ $('waitNote').textContent=v.names[1]?'Второй игрок на месте — можно начинать.'
+  :'Отправьте другу код '+SESS.code+' или ссылку '+location.origin+location.pathname+'#'+SESS.code;
+}
+function renderFinal(){
+ const v=VIEW,mine=v.winner===SESS.seat;
+ $('fT').innerHTML=mine?'Матч <em>за вами</em>':'Матч уходит <em>сопернику</em>';
+ $('f1').textContent=v.scores[SESS.seat];$('f2').textContent=v.scores[1-SESS.seat];
+ const st=v.stats[SESS.seat],rows=[
+  ['Верных ответов',st.solved],
+  ['Среднее время верного',st.solved?(st.sum/st.solved/1000).toFixed(1).replace('.',',')+' с':'—'],
+  ['Лучшее время',st.best!=null?(st.best/1000).toFixed(1).replace('.',',')+' с':'—'],
+  ['Неверных попыток',st.wrong]];
+ $('fStats').innerHTML=rows.map(r=>'<div><span>'+r[0]+'</span><b class="mono">'+r[1]+'</b></div>').join('');
+ $('btnRe').hidden=SESS.seat!==0;
+}
+
+/* ══ действия ══ */
+async function createRoom(){
+ const name=$('inName').value;
+ for(let i=0;i<8;i++){
+  const c=genCode();
+  if(await rcmd(['SET',KEY(c),'__new','EX',20,'NX'])){
+   const room=freshRoom(c,cleanName(name));
+   await saveRoom(c,room);
+   SESS={code:c,token:room.tokens[0],seat:0};saveSess(c,{token:room.tokens[0],seat:0});
+   location.hash=c;VIEW=null;lastRN=0;loop();return;
+  }
+ }
+ toast('Не вышло','Не удалось выделить код, попробуйте ещё раз.');
+}
+async function doJoin(){
+ const code=$('inCode').value.trim().toLowerCase();
+ if(!/^[a-z0-9]{6}$/.test(code)){toast('Код','Введите код из 6 символов.');return}
+ const out=await mutate(code,room=>{
+  if(!room)return{resp:'Комната не найдена. Проверьте код.'};
+  if(room.tokens[1])return{resp:'В этой комнате уже играют вдвоём.'};
+  room.tokens[1]=newTok();room.names[1]=cleanName($('inName').value);
+  room.seen[1]=Date.now();room.v++;return{token:room.tokens[1],seat:1,changed:true};
+ });
+ if(out.resp){toast('Не вышло',out.resp);return}
+ SESS={code,token:out.token,seat:1};saveSess(code,{token:out.token,seat:1});
+ location.hash=code;VIEW=null;lastRN=0;loop();
+}
+function resume(code){
+ const s=store()[code];if(!s)return;
+ SESS=Object.assign({code,seat:s.seat},s);VIEW=null;lastRN=0;
+ location.hash=code;loop();
+}
+async function startMatch(){
+ const out=await mutate(SESS.code,room=>{
+  if(!room||SESS.seat!==0)return{resp:'стартует создатель комнаты'};
+  if(!room.tokens[1])return{resp:'ждём второго игрока'};
+  if(!Object.values(room.settings.topics).some(Boolean))return{resp:'выберите хотя бы одну тему'};
+  resetMatch(room,Date.now());return{changed:true};
+ });
+ if(out.resp)toast('Старт',out.resp);
+}
+async function submit(){
+ const r=VIEW&&VIEW.round;if(VIEW.phase!=='round'||!r)return;
+ const val=parseAnswer($('inA').value);
+ if(val===null){shake();toast('Формат','Введите число или дробь вида 7/3.');return}
+ const canonical=val.toFixed(r.prec);
+ const h=await sha(canonical+':'+r.salt);
+ if(h!==r.h){
+  shake();
+  mutate(SESS.code,room=>{
+   if(room.phase==='round'&&room.round&&room.round.n===r.n){
+    room.tries[SESS.seat]++;room.stats[SESS.seat].wrong++;room.v++;return{changed:true}}
+  }).catch(()=>{});
+  $('myTries').textContent='неверно — попробуйте ещё';return;
+ }
+ /* атомарная заявка на победу: кто первый — тот и выиграл раунд */
+ const claim=await rcmd(['SET',WIN(SESS.code,r.n),SESS.seat,'EX',600,'NX']);
+ if(!claim){toast('Раунд','Соперник ответил чуть быстрее…');return}
+ const ms=Math.max(1,Date.now()-r.started);
+ memAns[r.n]=fmtAnswer(val,r.prec);
+ await mutate(SESS.code,room=>{
+  if(room.phase==='round'&&room.round&&room.round.n===r.n){
+   finishRound(room,SESS.seat,ms,fmtAnswer(val,r.prec),Date.now());return{changed:true}}
+ }).catch(()=>{});
+}
+function shake(){const i=$('inA');i.classList.remove('shake');void i.offsetWidth;i.classList.add('shake')}
+async function reqSkip(){
+ const r=VIEW&&VIEW.round;if(VIEW.phase!=='round'||!r)return;
+ const out=await mutate(SESS.code,room=>{
+  if(room.phase!=='round'||!room.round||room.round.n!==r.n)return{resp:'раунд не активен'};
+  if(room.pendingSkip)return{resp:'запрос уже отправлен'};
+  room.pendingSkip={by:SESS.seat,n:r.n,until:Date.now()+15000};room.v++;return{changed:true};
+ });
+ if(out.resp)toast('Пропуск',out.resp);
+}
+async function replySkip(ok){
+ const out=await mutate(SESS.code,room=>{
+  const p=room.pendingSkip;
+  if(!p||p.by===SESS.seat)return{resp:'нет запроса к вам'};
+  if(ok)finishRound(room,'skip',null,SESS.seat===0?(memAns[p.n]||'—'):'—',Date.now());
+  else{room.skipEv={res:'no',to:p.by,n:p.n};room.v++}
+  room.pendingSkip=null;return{changed:true};
+ });
+ if(out.resp)toast('Пропуск',out.resp);
+}
+async function rematch(){
+ const out=await mutate(SESS.code,room=>{
+  if(SESS.seat!==0||room.phase!=='final')return{resp:'реванш недоступен'};
+  resetMatch(room,Date.now());return{changed:true};
+ });
+ if(out.resp)toast('Реванш',out.resp);
+}
+async function bankAdd(){
+ $('bankMsg').textContent='Загружаем…';
+ const ids=[...new Set($('inIds').value.split(/[^0-9]+/).filter(Boolean).map(Number))].slice(0,6);
+ if(!ids.length){$('bankMsg').textContent='Укажите номера задач.';return}
+ const parts=[];
+ for(const id of ids){
+  try{
+   const p=await fetchProblem(id);
+   if(p.ans===null)throw new Error('ответ не число — добавьте вручную в другой версии');
+   await rcmd(['RPUSH','teo:bank',JSON.stringify(p)]);
+   parts.push('+'+id+' (№'+p.task+')');
+  }catch(e){parts.push('−'+id+': '+e.message)}
+ }
+ const n=await rcmd(['LLEN','teo:bank']);
+ $('bankMsg').textContent='Готово. В банке '+n+' задач. '+parts.join('; ');
+ $('inIds').value='';
+}
+
+/* ══ события ══ */
+ $('btnCreate').onclick=createRoom;
+ $('btnJoin').onclick=doJoin;
+ $('inCode').addEventListener('keydown',e=>{if(e.key==='Enter')doJoin()});
+ $('segT').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+ if(!VIEW||SESS.seat!==0)return;const v=+b.dataset.v;
+ mutate(SESS.code,r=>{if(r&&r.phase==='lobby'&&SESS.seat===0){r.settings.target=v;r.v++;return{changed:true}}})});
+ $('segTime').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+ if(!VIEW||SESS.seat!==0)return;const v=+b.dataset.v;
+ mutate(SESS.code,r=>{if(r&&r.phase==='lobby'&&SESS.seat===0){r.settings.time=v;r.v++;return{changed:true}}})});
+ $('btnStart').onclick=startMatch;
+ $('btnA').onclick=submit;
+ $('inA').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+ $('btnSkip').onclick=reqSkip;
+ $('oYes').onclick=()=>{hideOffer();replySkip(true)};
+ $('oNo').onclick=()=>{hideOffer();replySkip(false)};
+ $('btnRe').onclick=rematch;
+ $('btnNew').onclick=()=>fatal('Создайте новую комнату.');
+ $('btnExit').onclick=()=>fatal('Вы вышли из комнаты.');
+function copyTxt(t,m){if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Буфер обмена',m))}
+ $('btnCopyCode').onclick=()=>copyTxt(SESS.code,'Код скопирован.');
+ $('btnCopyLink').onclick=()=>copyTxt(location.origin+location.pathname+'#'+SESS.code,'Ссылка скопирована.');
+ $('btnFetch').onclick=bankAdd;
+
+/* ══ запуск ══ */
+(function(){
+ if(UP_URL.includes('ВСТАВЬТЕ')){
+  document.body.innerHTML='<div style="max-width:560px;margin:80px auto;font-family:sans-serif;line-height:1.6">'+
+   '<h2>Нужна настройка</h2><p>В начало <span class="mono">&lt;script&gt;</span> этого файла вставьте свои ключи Upstash Redis: '+
+   'константы <span class="mono">UP_URL</span> и <span class="mono">UP_TOK</span>. '+
+   'Как получить — см. инструкцию к проекту.</p></div>';
+  return;
+ }
+ const h=(location.hash||'').replace('#','').toLowerCase();
+ if(/^[a-z0-9]{6}$/.test(h))$('inCode').value=h;
+ renderRecent();
+ if(/^[a-z0-9]{6}$/.test(h)&&store()[h])resume(h);
+})();
+</script></body></html>
